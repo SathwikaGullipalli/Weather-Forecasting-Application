@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkyLens — Weather Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0b0f1a;--card:rgba(255,255,255,0.04);--card-border:rgba(255,255,255,0.08);
+      --glass:rgba(255,255,255,0.06);--text:#f0f4ff;--muted:rgba(240,244,255,0.45);
+      --accent:#5eead4;--accent2:#818cf8;--warn:#fbbf24;--danger:#f87171;
+      --success:#34d399;--radius:20px;--transition:0.4s cubic-bezier(0.23,1,0.32,1)
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background 1s ease}
+    body.wc{background:linear-gradient(135deg,#0b1a2e 0%,#0d2a4a 50%,#0b1a2e 100%)}
+    body.wl{background:linear-gradient(135deg,#1a1a2e 0%,#2d2d44 50%,#1a1a2e 100%)}
+    body.wr{background:linear-gradient(135deg,#0a0f1e 0%,#112244 50%,#0a0f1e 100%)}
+    body.ws{background:linear-gradient(135deg,#1a2333 0%,#233044 50%,#1a2333 100%)}
+    body.wt{background:linear-gradient(135deg,#0d0814 0%,#1a0a2e 50%,#0d0814 100%)}
+    body.wm{background:linear-gradient(135deg,#111827 0%,#1f2937 50%,#111827 100%)}
+    body.wh{background:linear-gradient(135deg,#1a1008 0%,#2d1f10 50%,#1a1008 100%)}
+
+    .orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;opacity:.18;transition:all 1.5s ease}
+    .orb1{width:500px;height:500px;background:var(--accent2);top:-150px;left:-150px}
+    .orb2{width:400px;height:400px;background:var(--accent);bottom:-100px;right:-100px}
+    .orb3{width:300px;height:300px;background:var(--warn);top:40%;left:30%;opacity:.08}
+
+    .container{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:32px 20px 60px}
+
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:48px;flex-wrap:wrap;gap:16px}
+    .logo{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;letter-spacing:-0.5px}
+    .logo span{color:var(--accent)}
+
+    .lang-select{background:var(--glass);border:1px solid var(--card-border);color:var(--text);padding:8px 16px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;outline:none;transition:border-color var(--transition)}
+    .lang-select:hover{border-color:var(--accent)}
+    .lang-select option{background:#1a1f2e}
+
+    .search-wrap{display:flex;gap:12px;margin-bottom:40px}
+    .search-input{flex:1;background:var(--glass);border:1px solid var(--card-border);color:var(--text);padding:16px 24px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:16px;outline:none;transition:border-color var(--transition),background var(--transition)}
+    .search-input::placeholder{color:var(--muted)}
+    .search-input:focus{border-color:var(--accent);background:rgba(255,255,255,.08)}
+    .search-btn{background:var(--accent);border:none;color:#0b0f1a;padding:16px 32px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:transform .2s,opacity .2s;white-space:nowrap}
+    .search-btn:hover{transform:scale(1.04);opacity:.9}
+    .search-btn:active{transform:scale(.97)}
+
+    .spinner-wrap{display:none;text-align:center;padding:60px 0}
+    .spinner-wrap.active{display:block}
+    .spinner{width:48px;height:48px;border:3px solid var(--card-border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spinner-text{color:var(--muted);font-size:14px}
+
+    .error-box{display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:var(--radius);padding:20px 24px;color:var(--danger);margin-bottom:24px;font-size:15px;gap:12px}
+    .error-box.active{display:flex;align-items:center}
+
+    .weather-main{display:none;animation:fadeUp .6s ease forwards}
+    .weather-main.active{display:block}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+    .hero-card{background:var(--card);border:1px solid var(--card-border);border-radius:28px;padding:40px;margin-bottom:20px;backdrop-filter:blur(20px);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px;position:relative;overflow:hidden}
+    .hero-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.5}
+
+    .city-info{flex:1;min-width:220px}
+    .city-name{font-family:'Playfair Display',serif;font-size:clamp(32px,6vw,52px);font-weight:900;line-height:1.1;margin-bottom:8px}
+    .city-country{color:var(--muted);font-size:15px;margin-bottom:4px}
+    .city-time{color:var(--muted);font-size:13px}
+    .weather-desc{font-size:18px;color:var(--accent);text-transform:capitalize;margin-top:12px;font-weight:500}
+
+    .temp-section{text-align:right}
+    .weather-icon-big{font-size:clamp(60px,10vw,96px);line-height:1;display:block;filter:drop-shadow(0 0 20px rgba(94,234,212,.3))}
+    .temp-big{font-family:'Playfair Display',serif;font-size:clamp(56px,10vw,100px);font-weight:900;line-height:1}
+    .temp-feels{color:var(--muted);font-size:14px;margin-top:4px}
+
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:20px}
+    .stat-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:20px;backdrop-filter:blur(20px);transition:transform var(--transition),border-color var(--transition)}
+    .stat-card:hover{transform:translateY(-3px);border-color:rgba(94,234,212,.3)}
+    .stat-icon{font-size:22px;margin-bottom:8px}
+    .stat-label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+    .stat-value{font-size:22px;font-weight:600}
+    .stat-unit{font-size:13px;color:var(--muted)}
+
+    .rec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px}
+    .rec-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;backdrop-filter:blur(20px)}
+    .rec-title{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .rec-title-icon{font-size:16px}
+    .rec-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(94,234,212,.12);border:1px solid rgba(94,234,212,.2);border-radius:50px;padding:6px 14px;margin:4px 4px 4px 0;font-size:13px;font-weight:500;color:var(--accent)}
+    .rec-badge.warn{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.25);color:var(--warn)}
+    .rec-badge.danger{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.25);color:var(--danger)}
+    .rec-badge.success{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.25);color:var(--success)}
+    .rec-text{font-size:14px;color:var(--muted);margin-top:10px;line-height:1.6}
+
+    .farmer-card{border-color:rgba(251,191,36,.2)}
+    .farmer-card .rec-title{color:var(--warn)}
+    .farmer-tip{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--card-border)}
+    .farmer-tip:last-child{border-bottom:none}
+    .farmer-tip-text{font-size:13px;color:var(--muted);line-height:1.5}
+
+    .sun-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;backdrop-filter:blur(20px);margin-bottom:20px}
+    .sun-row{display:flex;justify-content:space-around;text-align:center}
+    .sun-item .sun-icon{font-size:28px}
+    .sun-item .sun-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:6px 0 2px}
+    .sun-item .sun-time{font-size:18px;font-weight:600}
+
+    .vis-bar-track{height:6px;background:var(--card-border);border-radius:3px;margin-top:8px;overflow:hidden}
+    .vis-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width 1s ease}
+
+    .footer{text-align:center;color:var(--muted);font-size:12px;margin-top:48px}
+
+    @media(max-width:600px){
+      .hero-card{flex-direction:column}
+      .temp-section{text-align:left}
+      .header{flex-direction:column;align-items:flex-start}
+    }
+  </style>
+</head>
+<body class="wc">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
+  <div class="container">
+    <div class="header">
+      <div class="logo">Sky<span>Lens</span></div>
+      <select class="lang-select" id="langSelect" onchange="setLang(this.value)">
+        <option value="en">🌐 English</option>
+        <option value="hi">🇮🇳 हिंदी</option>
+        <option value="te">🌿 తెలుగు</option>
+      </select>
+    </div>
+
+    <div class="search-wrap">
+      <input class="search-input" id="cityInput" type="text" placeholder="Search city..."
+             onkeydown="if(event.key==='Enter')fetchWeather()"/>
+      <button class="search-btn" id="searchBtn" onclick="fetchWeather()">Search</button>
+    </div>
+
+    <div class="error-box" id="errorBox">⚠️ <span id="errorMsg"></span></div>
+
+    <div class="spinner-wrap" id="spinnerWrap">
+      <div class="spinner"></div>
+      <div class="spinner-text" id="spinnerText">Fetching weather data...</div>
+    </div>
+
+    <div class="weather-main" id="weatherMain">
+      <div class="hero-card">
+        <div class="city-info">
+          <div class="city-name" id="cityName">—</div>
+          <div class="city-country" id="cityCountry"></div>
+          <div class="city-time" id="cityTime"></div>
+          <div class="weather-desc" id="weatherDesc"></div>
+        </div>
+        <div class="temp-section">
+          <span class="weather-icon-big" id="weatherIconBig">🌤️</span>
+          <div class="temp-big"><span id="tempVal">—</span>°C</div>
+          <div class="temp-feels" id="feelsLike"></div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">💧</div>
+          <div class="stat-label" data-i18n="humidity">Humidity</div>
+          <div class="stat-value"><span id="humVal">—</span><span class="stat-unit">%</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💨</div>
+          <div class="stat-label" data-i18n="wind">Wind Speed</div>
+          <div class="stat-value"><span id="windVal">—</span><span class="stat-unit" id="windUnitSpan"> km/h</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🌡️</div>
+          <div class="stat-label" data-i18n="pressure">Pressure</div>
+          <div class="stat-value"><span id="pressVal">—</span><span class="stat-unit"> hPa</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">👁️</div>
+          <div class="stat-label" data-i18n="visibility">Visibility</div>
+          <div class="stat-value"><span id="visVal">—</span><span class="stat-unit"> km</span></div>
+          <div class="vis-bar-track"><div class="vis-bar-fill" id="visBar" style="width:0%"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🌬️</div>
+          <div class="stat-label" data-i18n="cloud">Cloud Cover</div>
+          <div class="stat-value"><span id="cloudVal">—</span><span class="stat-unit">%</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🧭</div>
+          <div class="stat-label" data-i18n="dew">Dew Point</div>
+          <div class="stat-value"><span id="dewVal">—</span><span class="stat-unit">°C</span></div>
+        </div>
+      </div>
+
+      <div class="sun-card">
+        <div class="sun-row">
+          <div class="sun-item">
+            <div class="sun-icon">🌅</div>
+            <div class="sun-label" data-i18n="sunrise">Sunrise</div>
+            <div class="sun-time" id="sunriseTime">—</div>
+          </div>
+          <div class="sun-item">
+            <div class="sun-icon">🌇</div>
+            <div class="sun-label" data-i18n="sunset">Sunset</div>
+            <div class="sun-time" id="sunsetTime">—</div>
+          </div>
+          <div class="sun-item">
+            <div class="sun-icon">🌕</div>
+            <div class="sun-label" data-i18n="uvi">UV Index</div>
+            <div class="sun-time" id="uviVal">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rec-grid">
+        <div class="rec-card" id="aiRecCard">
+          <div class="rec-title"><span class="rec-title-icon">🤖</span><span data-i18n="ai_rec">AI Recommendations</span></div>
+          <div id="clothingBadges"></div>
+          <div id="umbrellaBadge"></div>
+          <div class="rec-text" id="aiRecText"></div>
+        </div>
+        <div class="rec-card farmer-card">
+          <div class="rec-title"><span class="rec-title-icon">🌾</span><span data-i18n="farmer_rec">Farmer Advisory</span></div>
+          <div id="farmerTips"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">SkyLens · Powered by OpenWeather · <span id="footerTime"></span></div>
+  </div>
+
+<script>
+const API_KEY='59c19a47068137ec8f8b2cb9bf21f12e';
+let currentLang='en',lastData=null;
+
+const strings={
+  en:{search:'Search city...',btn:'Search',humidity:'Humidity',wind:'Wind Speed',pressure:'Pressure',
+      visibility:'Visibility',cloud:'Cloud Cover',dew:'Dew Point',sunrise:'Sunrise',sunset:'Sunset',
+      uvi:'UV Index',ai_rec:'AI Recommendations',farmer_rec:'Farmer Advisory',
+      feels:'Feels like',loading:'Fetching weather data...',
+      notfound:'City not found. Please check spelling.',network:'Network error. Check your connection.',
+      windUnit:' km/h'},
+  hi:{search:'शहर खोजें...',btn:'खोजें',humidity:'आर्द्रता',wind:'हवा की गति',pressure:'वायुदाब',
+      visibility:'दृश्यता',cloud:'बादल आवरण',dew:'ओस बिंदु',sunrise:'सूर्योदय',sunset:'सूर्यास्त',
+      uvi:'यूवी सूचकांक',ai_rec:'AI सुझाव',farmer_rec:'किसान सलाह',
+      feels:'महसूस होता है',loading:'मौसम डेटा लोड हो रहा है...',
+      notfound:'शहर नहीं मिला। वर्तनी जांचें।',network:'नेटवर्क त्रुटि। कनेक्शन जांचें।',
+      windUnit:' किमी/घंटा'},
+  te:{search:'నగరం వెతకండి...',btn:'వెతకండి',humidity:'తేమ',wind:'గాలి వేగం',pressure:'వాయు పీడనం',
+      visibility:'దృశ్యమానత',cloud:'మేఘ ఆవరణ',dew:'మంచు బిందువు',sunrise:'సూర్యోదయం',sunset:'సూర్యాస్తమయం',
+      uvi:'UV సూచిక',ai_rec:'AI సిఫార్సులు',farmer_rec:'రైతు సలహా',
+      feels:'అనిపిస్తుంది',loading:'వాతావరణ డేటా లోడ్ అవుతోంది...',
+      notfound:'నగరం కనుగొనలేదు. స్పెల్లింగ్ తనిఖీ చేయండి.',network:'నెట్‌వర్క్ లోపం. కనెక్షన్ తనిఖీ చేయండి.',
+      windUnit:' కి.మీ/గంట'}
+};
+
+const condMap={
+  Clear:{icon:'☀️',bg:'wc'},Clouds:{icon:'☁️',bg:'wl'},
+  Rain:{icon:'🌧️',bg:'wr'},Drizzle:{icon:'🌦️',bg:'wr'},
+  Thunderstorm:{icon:'⛈️',bg:'wt'},Snow:{icon:'❄️',bg:'ws'},
+  Mist:{icon:'🌫️',bg:'wm'},Haze:{icon:'🌁',bg:'wh'},
+  Smoke:{icon:'🌫️',bg:'wh'},Fog:{icon:'🌫️',bg:'wm'},
+  Sand:{icon:'🏜️',bg:'wh'},Dust:{icon:'🌪️',bg:'wh'},Tornado:{icon:'🌪️',bg:'wt'}
+};
+
+const t=k=>(strings[currentLang]||strings.en)[k]||(strings.en[k]||k);
+
+function setLang(lang){
+  currentLang=lang;
+  document.getElementById('cityInput').placeholder=t('search');
+  document.getElementById('searchBtn').textContent=t('btn');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    const v=strings[lang]?.[k];
+    if(v)el.textContent=v;
+  });
+  const wuEl=document.getElementById('windUnitSpan');
+  if(wuEl)wuEl.textContent=t('windUnit');
+  if(lastData)renderWeather(lastData);
+}
+
+function showSpinner(v){
+  document.getElementById('spinnerWrap').classList.toggle('active',v);
+  document.getElementById('spinnerText').textContent=t('loading');
+}
+
+function showError(msg){
+  const b=document.getElementById('errorBox');
+  document.getElementById('errorMsg').textContent=msg;
+  b.classList.add('active');
+  setTimeout(()=>b.classList.remove('active'),6000);
+}
+
+function fmtTime(unix,offset){
+  const d=new Date((unix+offset)*1000);
+  let h=d.getUTCHours(),m=d.getUTCMinutes();
+  const ap=h>=12?'PM':'AM';
+  h=h%12||12;
+  return `${h}:${String(m).padStart(2,'0')} ${ap}`;
+}
+
+function dewPt(temp,hum){
+  const a=17.27,b=237.7,al=(a*temp)/(b+temp)+Math.log(hum/100);
+  return ((b*al)/(a-al)).toFixed(1);
+}
+
+function getClothes(temp){
+  const d={
+    en:[['Heavy Coat','Thermal Wear','Gloves','Scarf'],['Jacket','Sweater','Jeans'],['Light Jacket','T-Shirt','Pants'],['Light Clothes','Shorts','Sunscreen']],
+    hi:[['भारी कोट','थर्मल','दस्ताने','स्कार्फ'],['जैकेट','स्वेटर','जींस'],['हल्की जैकेट','टी-शर्ट','पैंट'],['हल्के कपड़े','शॉर्ट्स','सनस्क्रीन']],
+    te:[['భారీ కోటు','థర్మల్','చేతి తొడుగులు','స్కార్ఫ్'],['జాకెట్','స్వెటర్','జీన్స్'],['తేలికైన జాకెట్','టీ-షర్ట్','ప్యాంట్'],['తేలికైన బట్టలు','షార్ట్స్','సన్‌స్క్రీన్']]
+  };
+  const arr=d[currentLang]||d.en;
+  if(temp<5)return arr[0];
+  if(temp<15)return arr[1];
+  if(temp<25)return arr[2];
+  return arr[3];
+}
+
+function getUmbrella(cond,hum){
+  const rainy=['Rain','Drizzle','Thunderstorm'].includes(cond);
+  const likely=!rainy&&hum>80;
+  const labels={
+    rain:{en:'☂️ Take an umbrella',hi:'☂️ छाता साथ रखें',te:'☂️ గొడుగు తీసుకెళ్ళండి'},
+    likely:{en:'☂️ Umbrella advisable (high humidity)',hi:'☂️ छाता सलाहनीय (उच्च आर्द्रता)',te:'☂️ గొడుగు సలహా (అధిక తేమ)'},
+    no:{en:'✓ No umbrella needed',hi:'✓ छाते की जरूरत नहीं',te:'✓ గొడుగు అవసరం లేదు'}
+  };
+  if(rainy)return{text:labels.rain[currentLang],type:'warn'};
+  if(likely)return{text:labels.likely[currentLang],type:'warn'};
+  return{text:labels.no[currentLang],type:'success'};
+}
+
+function getFarmerTips(temp,hum,wind,cond){
+  const L=currentLang;
+  const tips=[];
+  const T={
+    ri:{en:'🌧️ Rain expected — skip irrigation today',hi:'🌧️ बारिश संभावित — सिंचाई न करें',te:'🌧️ వర్షం అంచనా — నేడు నీళ్ళు పెట్టకండి'},
+    rh:{en:'⚠️ Delay harvest to avoid rain damage',hi:'⚠️ बारिश से बचाने के लिए कटाई स्थगित करें',te:'⚠️ వర్షం నష్టం నివారించేందుకు కోత ఆలస్యం చేయండి'},
+    ho:{en:'☀️ High heat — water crops early morning or evening',hi:'☀️ अधिक गर्मी — सुबह या शाम सिंचाई करें',te:'☀️ అధిక వేడి — పొద్దున లేదా సాయంత్రం నీళ్ళు పెట్టండి'},
+    fr:{en:'🥶 Frost risk — protect sensitive crops',hi:'🥶 पाले का खतरा — नाजुक फसलें ढकें',te:'🥶 మంచు ప్రమాదం — సున్నితమైన పంటలు కప్పండి'},
+    hw:{en:'💨 High winds — avoid pesticide/fertilizer spraying',hi:'💨 तेज हवा — कीटनाशक छिड़काव न करें',te:'💨 అధిక గాలి — పురుగుల మందు పిచికారీ చేయకండి'},
+    hf:{en:'🍄 High humidity — monitor crops for fungal disease',hi:'🍄 उच्च आर्द्रता — फफूंद रोग की निगरानी करें',te:'🍄 అధిక తేమ — శిలీంధ్ర వ్యాధి గమనించండి'},
+    gs:{en:'✅ Good conditions for pesticide/fertilizer application',hi:'✅ कीटनाशक/उर्वरक के लिए अच्छी स्थिति',te:'✅ పురుగుల మందు/ఎరువుల వాడుకకు మంచి పరిస్థితి'},
+    th:{en:'⛈️ Thunderstorm — seek shelter, avoid open fields',hi:'⛈️ आंधी — खुले खेतों से दूर रहें',te:'⛈️ ఉరుముల వర్షం — ఆశ్రయం తీసుకోండి'}
+  };
+  if(['Rain','Drizzle'].includes(cond)){tips.push(T.ri[L]);tips.push(T.rh[L]);}
+  if(cond==='Thunderstorm')tips.push(T.th[L]);
+  if(temp>35)tips.push(T.ho[L]);
+  if(temp<3)tips.push(T.fr[L]);
+  if(wind>30)tips.push(T.hw[L]);
+  if(hum>85&&!['Rain','Drizzle','Thunderstorm'].includes(cond))tips.push(T.hf[L]);
+  if(!['Rain','Drizzle','Thunderstorm'].includes(cond)&&wind<20&&temp>10&&temp<30)tips.push(T.gs[L]);
+  if(!tips.length)tips.push({en:'🌱 Normal conditions — routine farming is fine',hi:'🌱 सामान्य स्थिति — नियमित खेती ठीक है',te:'🌱 సాధారణ పరిస్థితులు — సాధారణ వ్యవసాయం సరే'}[L]);
+  return tips;
+}
+
+function getAIText(temp,hum,cond){
+  const L=currentLang;
+  const msgs={
+    Clear:{en:`Clear sky at ${temp}°C. Stay hydrated and wear sunscreen if spending time outdoors.`,
+           hi:`${temp}°C पर साफ आकाश। बाहर रहें तो पानी पिएं और सनस्क्रीन लगाएं।`,
+           te:`${temp}°C వద్ద స్పష్టమైన ఆకాశం. నీళ్ళు తాగండి, సన్‌స్క్రీన్ వాడండి.`},
+    Rain:{en:`Rainy weather at ${temp}°C. Carry waterproof gear and watch your step on slippery surfaces.`,
+          hi:`${temp}°C पर बारिश। वाटरप्रूफ सामान रखें और फिसलन से सावधान रहें।`,
+          te:`${temp}°C వద్ద వర్షం. వాటర్‌ప్రూఫ్ వస్తువులు తీసుకోండి, జారే ఉపరితలాలలో జాగ్రత్తగా ఉండండి.`},
+    Thunderstorm:{en:`Thunderstorm warning at ${temp}°C. Avoid open areas, seek shelter immediately.`,
+                  hi:`${temp}°C पर आंधी की चेतावनी। खुले स्थानों से बचें, तुरंत आश्रय लें।`,
+                  te:`${temp}°C వద్ద ఉరుముల వర్షం హెచ్చరిక. బహిరంగ ప్రదేశాలను నివారించి వెంటనే ఆశ్రయం తీసుకోండి.`},
+    Snow:{en:`Snowy conditions at ${temp}°C. Bundle up in warm layers and use non-slip footwear.`,
+          hi:`${temp}°C पर बर्फबारी। गर्म कपड़े पहनें और नॉन-स्लिप फुटवेयर पहनें।`,
+          te:`${temp}°C వద్ద మంచు. వెచ్చని దుస్తులు ధరించండి, జారని పాదరక్షలు వాడండి.`},
+  };
+  const def={en:`Temperature ${temp}°C, humidity ${hum}%. Dress appropriately for the conditions and stay comfortable.`,
+             hi:`तापमान ${temp}°C, आर्द्रता ${hum}%। मौसम के अनुसार कपड़े पहनें।`,
+             te:`ఉష్ణోగ్రత ${temp}°C, తేమ ${hum}%. వాతావరణానికి తగిన బట్టలు ధరించండి.`};
+  return (msgs[cond]||def)[L]||(msgs[cond]||def).en;
+}
+
+function renderWeather(data){
+  lastData=data;
+  const{main,weather,wind,clouds,visibility,sys,name,timezone}=data;
+  const cMain=weather[0].main;
+  const cInfo=condMap[cMain]||{icon:'🌤️',bg:'wc'};
+  const temp=Math.round(main.temp);
+  const feels=Math.round(main.feels_like);
+  const hum=main.humidity;
+  const windKmh=Math.round(wind.speed*3.6);
+  const vis=visibility?(visibility/1000).toFixed(1):'—';
+  const dp=dewPt(main.temp,hum);
+  const tz=timezone||0;
+  const nowD=new Date((Date.now()/1000+tz)*1000);
+  const timeStr=nowD.toUTCString().slice(17,22);
+  const dateStr=nowD.toUTCString().slice(0,16);
+
+  document.body.className=cInfo.bg;
+
+  document.getElementById('cityName').textContent=name;
+  document.getElementById('cityCountry').textContent=`${sys.country} · ${dateStr}`;
+  document.getElementById('cityTime').textContent=`Local: ${timeStr}`;
+  document.getElementById('weatherDesc').textContent=weather[0].description;
+  document.getElementById('weatherIconBig').textContent=cInfo.icon;
+  document.getElementById('tempVal').textContent=temp;
+  document.getElementById('feelsLike').textContent=`${t('feels')} ${feels}°C`;
+  document.getElementById('humVal').textContent=hum;
+  document.getElementById('windVal').textContent=windKmh;
+  document.getElementById('windUnitSpan').textContent=t('windUnit');
+  document.getElementById('pressVal').textContent=main.pressure;
+  document.getElementById('visVal').textContent=vis;
+  document.getElementById('visBar').style.width=Math.min((parseFloat(vis)||0)/10*100,100)+'%';
+  document.getElementById('cloudVal').textContent=clouds?.all??'—';
+  document.getElementById('dewVal').textContent=dp;
+  document.getElementById('sunriseTime').textContent=fmtTime(sys.sunrise,tz);
+  document.getElementById('sunsetTime').textContent=fmtTime(sys.sunset,tz);
+
+  const uvEst=cMain==='Clear'?(temp>30?'8-10 🔴':'5-7 🟡'):cMain==='Clouds'?'2-4 🟢':'1-2 🟢';
+  document.getElementById('uviVal').textContent=uvEst;
+
+  const clothes=getClothes(temp);
+  document.getElementById('clothingBadges').innerHTML=clothes.map(c=>`<span class="rec-badge">${c}</span>`).join('');
+
+  const umb=getUmbrella(cMain,hum);
+  document.getElementById('umbrellaBadge').innerHTML=`<span class="rec-badge ${umb.type}" style="margin-top:10px">${umb.text}</span>`;
+  document.getElementById('aiRecText').textContent=getAIText(temp,hum,cMain);
+
+  const tips=getFarmerTips(temp,hum,windKmh,cMain);
+  document.getElementById('farmerTips').innerHTML=tips.map(tip=>`<div class="farmer-tip"><span class="farmer-tip-text">${tip}</span></div>`).join('');
+
+  document.getElementById('weatherMain').classList.add('active');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    const v=strings[currentLang]?.[k];
+    if(v)el.textContent=v;
+  });
+}
+
+async function fetchWeather(){
+  const city=document.getElementById('cityInput').value.trim();
+  if(!city){showError('Please enter a city name.');return;}
+  document.getElementById('errorBox').classList.remove('active');
+  document.getElementById('weatherMain').classList.remove('active');
+  showSpinner(true);
+  try{
+    const r=await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`);
+    if(r.status===404){showSpinner(false);showError(t('notfound'));return;}
+    if(!r.ok){showSpinner(false);showError(`API Error: ${r.status}`);return;}
+    const d=await r.json();
+    showSpinner(false);
+    renderWeather(d);
+  }catch(e){
+    showSpinner(false);
+    showError(t('network'));
+  }
+}
+
+setInterval(()=>{document.getElementById('footerTime').textContent=new Date().toLocaleTimeString();},1000);
+document.getElementById('footerTime').textContent=new Date().toLocaleTimeString();
+
+window.addEventListener('load',()=>{
+  document.getElementById('cityInput').value='Hyderabad';
+  fetchWeather();
+});
+</script>
+</body>
+</html>
