@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkyWatch — Weather Dashboard</title>
+  <link rel="stylesheet" href="weather.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="weather-default" id="body">
+
+  <!-- Animated background particles canvas -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- ── APP WRAPPER ── -->
+  <div class="app-wrapper" id="app">
+
+    <!-- ── HEADER ── -->
+    <header class="app-header">
+      <div class="brand">
+        <i class="fa-solid fa-cloud-sun brand-icon"></i>
+        <span class="brand-name">SkyWatch</span>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-wrapper">
+        <div class="search-box" id="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input
+            type="text"
+            id="city-input"
+            class="search-input"
+            placeholder="Search city..."
+            autocomplete="off"
+          />
+          <button class="search-btn" id="search-btn" title="Search">
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+          <button class="locate-btn" id="locate-btn" title="Use my location">
+            <i class="fa-solid fa-location-crosshairs"></i>
+          </button>
+        </div>
+        <!-- Autocomplete dropdown -->
+        <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
+      </div>
+
+      <!-- Controls -->
+      <div class="header-controls">
+        <!-- Language selector -->
+        <div class="control-group">
+          <select id="lang-select" class="control-select" title="Language">
+            <option value="en">EN</option>
+            <option value="hi">हिं</option>
+            <option value="te">తె</option>
+            <option value="ta">த</option>
+            <option value="kn">ಕ</option>
+          </select>
+        </div>
+        <!-- °C / °F Toggle -->
+        <div class="unit-toggle" id="unit-toggle" title="Toggle °C/°F">
+          <span class="toggle-opt" id="toggle-c">°C</span>
+          <div class="toggle-thumb" id="toggle-thumb"></div>
+          <span class="toggle-opt" id="toggle-f">°F</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="main-grid" id="main-grid">
+
+      <!-- ── LEFT COLUMN ── -->
+      <div class="left-col">
+
+        <!-- Current Weather Card -->
+        <div class="card current-weather-card" id="current-card">
+          <div class="current-top">
+            <div class="location-info">
+              <div class="city-name" id="city-name">Loading...</div>
+              <div class="country-date">
+                <span id="country-name"></span>
+                <span class="date-divider">·</span>
+                <span id="current-date"></span>
+              </div>
+            </div>
+            <div class="weather-icon-wrap">
+              <div class="weather-anim-icon" id="weather-anim-icon"></div>
+            </div>
+          </div>
+
+          <div class="temp-row">
+            <div class="main-temp" id="main-temp">--</div>
+            <div class="temp-details">
+              <div class="feels-like" id="feels-like">Feels like --</div>
+              <div class="weather-desc" id="weather-desc">--</div>
+              <div class="high-low">
+                <span id="temp-high"><i class="fa-solid fa-arrow-up"></i> --</span>
+                <span id="temp-low"><i class="fa-solid fa-arrow-down"></i> --</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats Row -->
+          <div class="quick-stats">
+            <div class="quick-stat">
+              <i class="fa-solid fa-droplet"></i>
+              <span id="qs-humidity">--%</span>
+              <label>Humidity</label>
+            </div>
+            <div class="quick-stat">
+              <i class="fa-solid fa-wind"></i>
+              <span id="qs-wind">-- km/h</span>
+              <label>Wind</label>
+            </div>
+            <div class="quick-stat">
+              <i class="fa-solid fa-eye"></i>
+              <span id="qs-visibility">-- km</span>
+              <label>Visibility</label>
+            </div>
+            <div class="quick-stat">
+              <i class="fa-solid fa-gauge-high"></i>
+              <span id="qs-pressure">-- hPa</span>
+              <label>Pressure</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Recommendations Card -->
+        <div class="card ai-card" id="ai-card">
+          <div class="card-header">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span id="label-ai-rec">AI Recommendations</span>
+          </div>
+          <div class="ai-recommendations" id="ai-recommendations">
+            <div class="ai-chip loading-chip">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Analysing weather...
+            </div>
+          </div>
+        </div>
+
+        <!-- Farmer Advisory Card -->
+        <div class="card farmer-card" id="farmer-card">
+          <div class="card-header">
+            <i class="fa-solid fa-seedling"></i>
+            <span id="label-farmer">Farmer Advisory</span>
+          </div>
+          <div class="farmer-advisory" id="farmer-advisory">
+            <p class="advisory-text" id="advisory-text">--</p>
+          </div>
+        </div>
+
+      </div><!-- /left-col -->
+
+      <!-- ── RIGHT COLUMN ── -->
+      <div class="right-col">
+
+        <!-- 5-Day Forecast -->
+        <div class="card forecast-card">
+          <div class="card-header">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span id="label-forecast">5-Day Forecast</span>
+          </div>
+          <div class="forecast-list" id="forecast-list">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+
+          <!-- AQI Card -->
+          <div class="card metric-card aqi-card" id="aqi-card">
+            <div class="metric-icon"><i class="fa-solid fa-lungs"></i></div>
+            <div class="metric-label" id="label-aqi">Air Quality</div>
+            <div class="aqi-value" id="aqi-value">--</div>
+            <div class="aqi-label" id="aqi-label">--</div>
+            <div class="aqi-bar-track">
+              <div class="aqi-bar-fill" id="aqi-bar-fill"></div>
+            </div>
+          </div>
+
+          <!-- Humidity Gauge -->
+          <div class="card metric-card humidity-card">
+            <div class="metric-icon"><i class="fa-solid fa-droplet"></i></div>
+            <div class="metric-label" id="label-humidity">Humidity</div>
+            <div class="gauge-wrap">
+              <svg class="gauge-svg" viewBox="0 0 100 60">
+                <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8" stroke-linecap="round"/>
+                <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="url(#humGrad)" stroke-width="8" stroke-linecap="round"
+                  stroke-dasharray="141.37" stroke-dashoffset="141.37" id="humidity-arc"/>
+                <defs>
+                  <linearGradient id="humGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#4FC3F7"/>
+                    <stop offset="100%" stop-color="#0288D1"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="gauge-val" id="humidity-val">--%</div>
+            </div>
+          </div>
+
+          <!-- Pressure Card -->
+          <div class="card metric-card pressure-card">
+            <div class="metric-icon"><i class="fa-solid fa-gauge-high"></i></div>
+            <div class="metric-label" id="label-pressure">Pressure</div>
+            <div class="pressure-value" id="pressure-value">-- hPa</div>
+            <div class="pressure-trend" id="pressure-trend">
+              <i class="fa-solid fa-minus"></i> Normal
+            </div>
+            <div class="pressure-bar">
+              <div class="pressure-fill" id="pressure-fill"></div>
+            </div>
+          </div>
+
+          <!-- Visibility Card -->
+          <div class="card metric-card visibility-card">
+            <div class="metric-icon"><i class="fa-solid fa-eye"></i></div>
+            <div class="metric-label" id="label-visibility">Visibility</div>
+            <div class="visibility-value" id="visibility-value">-- km</div>
+            <div class="visibility-desc" id="visibility-desc">Clear view</div>
+            <div class="vis-circles">
+              <div class="vis-dot" id="vd1"></div>
+              <div class="vis-dot" id="vd2"></div>
+              <div class="vis-dot" id="vd3"></div>
+              <div class="vis-dot" id="vd4"></div>
+              <div class="vis-dot" id="vd5"></div>
+            </div>
+          </div>
+
+          <!-- Wind Card -->
+          <div class="card metric-card wind-card">
+            <div class="metric-icon"><i class="fa-solid fa-wind"></i></div>
+            <div class="metric-label" id="label-wind">Wind</div>
+            <div class="wind-compass" id="wind-compass">
+              <div class="compass-ring"></div>
+              <div class="compass-needle" id="compass-needle">
+                <div class="needle-head"></div>
+              </div>
+              <div class="compass-dirs">
+                <span class="dir n">N</span>
+                <span class="dir e">E</span>
+                <span class="dir s">S</span>
+                <span class="dir w">W</span>
+              </div>
+            </div>
+            <div class="wind-speed-display" id="wind-speed-display">-- km/h</div>
+            <div class="wind-dir-display" id="wind-dir-display">--</div>
+          </div>
+
+          <!-- Sunrise / Sunset Card -->
+          <div class="card metric-card sun-card">
+            <div class="metric-icon"><i class="fa-solid fa-sun"></i></div>
+            <div class="metric-label" id="label-sun">Sun Schedule</div>
+            <div class="sun-arc-wrap">
+              <svg class="sun-arc-svg" viewBox="0 0 160 90">
+                <path d="M10 80 Q80 0 150 80" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+                <path d="M10 80 Q80 0 150 80" fill="none" stroke="url(#sunGrad)" stroke-width="2.5"
+                  stroke-dasharray="200" stroke-dashoffset="200" id="sun-arc-path"/>
+                <circle r="6" fill="#FFB74D" filter="url(#sunGlow)" id="sun-dot" cx="10" cy="80"/>
+                <defs>
+                  <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#FF8A00"/>
+                    <stop offset="50%" stop-color="#FFD54F"/>
+                    <stop offset="100%" stop-color="#FF8A00"/>
+                  </linearGradient>
+                  <filter id="sunGlow">
+                    <feGaussianBlur stdDeviation="2" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+              </svg>
+            </div>
+            <div class="sun-times">
+              <div class="sun-time-item">
+                <i class="fa-regular fa-sun"></i>
+                <div>
+                  <div class="sun-time-label" id="label-sunrise">Sunrise</div>
+                  <div class="sun-time-val" id="sunrise-time">--:--</div>
+                </div>
+              </div>
+              <div class="sun-time-item">
+                <i class="fa-solid fa-moon"></i>
+                <div>
+                  <div class="sun-time-label" id="label-sunset">Sunset</div>
+                  <div class="sun-time-val" id="sunset-time">--:--</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /metrics-grid -->
+
+        <!-- Hourly Forecast -->
+        <div class="card hourly-card">
+          <div class="card-header">
+            <i class="fa-regular fa-clock"></i>
+            <span id="label-hourly">Hourly Forecast</span>
+          </div>
+          <div class="hourly-scroll" id="hourly-scroll">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+      </div><!-- /right-col -->
+    </main>
+
+    <!-- ── BOTTOM ATTRIBUTION ── -->
+    <footer class="app-footer">
+      <span>Data by OpenWeatherMap</span>
+      <span class="dot-sep">·</span>
+      <span id="last-updated">Updated just now</span>
+    </footer>
+
+  </div><!-- /app-wrapper -->
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner">
+      <div class="spinner-ring"></div>
+      <div class="loading-text" id="loading-text">Fetching weather...</div>
+    </div>
+  </div>
+
+  <!-- Error Toast -->
+  <div class="toast" id="toast">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span id="toast-msg">Something went wrong.</span>
+  </div>
+
+  <script src="weather.js"></script>
+</body>
+</html>
