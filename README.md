@@ -1,4 +1,4 @@
-# 🌦️ SkyWatch - Intelligent Weather Forecasting Application
+# SkyWatch - Intelligent Weather Forecasting Application
 
 SkyWatch is a modern weather forecasting web application that provides real-time weather information, hourly forecasts, 5-day forecasts, AI-powered recommendations, farmer advisories, and multilingual support through a clean and responsive user interface.
 
@@ -7,9 +7,9 @@ Built using HTML, CSS, and JavaScript, SkyWatch integrates with the OpenWeatherM
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🌍 Real-Time Weather Information
+### Real-Time Weather Information
 
 * Current temperature
 * Weather conditions
@@ -18,14 +18,14 @@ Built using HTML, CSS, and JavaScript, SkyWatch integrates with the OpenWeatherM
 * Atmospheric pressure
 * Visibility
 
-### 📅 Weather Forecasting
+###  Weather Forecasting
 
 * Hourly weather forecasts
 * 5-day weather forecasts
 * City-based weather search
 * Current location weather detection
 
-### 🤖 AI-Based Recommendations
+### AI-Based Recommendations
 
 Provides intelligent suggestions based on weather conditions:
 
@@ -34,7 +34,7 @@ Provides intelligent suggestions based on weather conditions:
 * Hydration reminders
 * Weather safety tips
 
-### 🌱 Farmer Advisory System
+### Farmer Advisory System
 
 Specialized weather-based guidance for agriculture:
 
@@ -43,20 +43,20 @@ Specialized weather-based guidance for agriculture:
 * Weather risk alerts
 * Agricultural decision support
 
-### 🌐 Multilingual Support
+###  Multilingual Support
 
 Supports multiple languages for improved accessibility.
 
-### 🌡️ Temperature Conversion
+### Temperature Conversion
 
 * Celsius (°C)
 * Fahrenheit (°F)
 
-### 📍 Geolocation Support
+### Geolocation Support
 
 Automatically detects the user's location and displays local weather information.
 
-### 🌫️ Additional Weather Insights
+### Additional Weather Insights
 
 * Air Quality Index (AQI)
 * Humidity Analysis
@@ -65,7 +65,7 @@ Automatically detects the user's location and displays local weather information
 
 ---
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 ### Frontend
 
